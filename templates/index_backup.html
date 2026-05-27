@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Capacity Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="header">
+        <div>Healthcare Capacity Dashboard</div>
+        <div class="header-subtext">
+            Live file refresh enabled • Last updated: {{ last_refresh }} • Model trained: {{ model_last_trained }}
+        </div>
+    </div>
+
+    <div class="insight-box">
+        {{ insight }}
+    </div>
+
+    <form method="GET" action="/" class="filters">
+        <div class="filter-group">
+            <label>City</label>
+            <select name="city">
+                <option value="All">All Cities</option>
+                {% for city in cities %}
+                    <option value="{{ city }}" {% if city == selected_city %}selected{% endif %}>{{ city }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Encounter Class</label>
+            <select name="encounter_class">
+                <option value="All">All Encounter Classes</option>
+                {% for ec in encounter_classes %}
+                    <option value="{{ ec }}" {% if ec == selected_class %}selected{% endif %}>{{ ec }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Age Group</label>
+            <select name="age_group">
+                <option value="All">All Age Groups</option>
+                {% for ag in age_groups %}
+                    <option value="{{ ag }}" {% if ag == selected_age_group %}selected{% endif %}>{{ ag }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Gender</label>
+            <select name="gender">
+                <option value="All">All Genders</option>
+                {% for gender in genders %}
+                    <option value="{{ gender }}" {% if gender == selected_gender %}selected{% endif %}>{{ gender }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Race</label>
+            <select name="race">
+                <option value="All">All Races</option>
+                {% for race in races %}
+                    <option value="{{ race }}" {% if race == selected_race %}selected{% endif %}>{{ race }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group button-group">
+            <label>&nbsp;</label>
+            <button type="submit">Apply Filters</button>
+        </div>
+    </form>
+
+    <!-- Current Status KPIs -->
+    <div class="section-title">Current Operational Snapshot</div>
+    <div class="kpi-container">
+
+        <div class="kpi-card">
+            <div class="kpi-title">Total Patients</div>
+            <div class="kpi-value">{{ total_patients }}</div>
+            <div class="kpi-note">Unique patients in selected view</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-title">Total Encounters</div>
+            <div class="kpi-value">{{ total_encounters }}</div>
+            <div class="kpi-note">All encounter records after filters</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-title">Avg Length of Stay</div>
+            <div class="kpi-value">{{ avg_los }}</div>
+            <div class="kpi-note">Measured in hours</div>
+        </div>
+
+        <div class="kpi-card {{ risk_class }}">
+            <div class="kpi-title">Risk Level</div>
+            <div class="kpi-value">{{ risk_level }}</div>
+            <div class="kpi-note">Based on expected peak demand</div>
+        </div>
+
+    </div>
+
+    <!-- Forecast KPIs -->
+    <div class="section-title">Forecast Summary</div>
+    <div class="kpi-container">
+
+        <div class="kpi-card highlight">
+            <div class="kpi-title">Peak Demand Time</div>
+            <div class="kpi-value small">{{ peak_forecast_hour }}</div>
+            <div class="kpi-note">Highest predicted demand point</div>
+        </div>
+
+        <div class="kpi-card highlight">
+            <div class="kpi-title">Peak Expected Patients</div>
+            <div class="kpi-value">{{ peak_forecast_value }}</div>
+            <div class="kpi-note">Predicted maximum load</div>
+        </div>
+
+        <div class="kpi-card highlight">
+            <div class="kpi-title">Forecast Window</div>
+            <div class="kpi-value">{{ forecast_horizon }}</div>
+            <div class="kpi-note">Prediction horizon</div>
+        </div>
+
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="chart-container">
+            <h2>Monthly Encounter Trend</h2>
+            <p class="chart-subtitle">Recent long-term trend in patient encounters.</p>
+            <img src="{{ url_for('static', filename='monthly_encounters.png') }}" alt="Monthly Encounter Trend" width="100%">
+        </div>
+
+        <div class="chart-container">
+            <h2>Top Cities by Encounter Volume</h2>
+            <p class="chart-subtitle">Locations contributing the highest encounter volume.</p>
+            <img src="{{ url_for('static', filename='top_cities.png') }}" alt="Top Cities Chart" width="100%">
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>Patient Flow Outlook</h2>
+        <p class="chart-subtitle">
+            Simple view of expected patient demand across the next upcoming time blocks.
+        </p>
+        {{ forecast_plot | safe }}
+    </div>
+
+    <div class="chart-container">
+        <h2>Next Key Forecast Values</h2>
+        <div class="forecast-list">
+            <ul>
+                {% for row in forecast_values %}
+                    <li><strong>{{ row.month }}</strong> : {{ row.value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+<div class="chart-container">
+    <h2>Manager Assistant</h2>
+    <p class="chart-subtitle">
+        Operational interpretation of the current dashboard results.
+    </p>
+
+    <div class="assistant-grid">
+        <div class="assistant-card">
+            <h3>Operational Interpretation</h3>
+            <p>
+                {% if risk_level == "High" %}
+                    Demand is projected to rise to a high level within the forecast window. This suggests a possible short-term surge, and current resources may come under pressure during the peak period.
+                {% elif risk_level == "Medium" %}
+                    Demand is expected to remain moderate, with some concentration around the forecast peak. The situation does not indicate a severe surge, but capacity should be monitored closely.
+                {% else %}
+                    Demand appears stable and evenly distributed across the forecast window. No major surge pattern is visible at the moment.
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="assistant-card">
+            <h3>Recommended Action</h3>
+            <p>
+                {% if risk_level == "High" %}
+                    Review staffing coverage, bed readiness, and near-term operational plans before the projected peak period.
+                {% elif risk_level == "Medium" %}
+                    Maintain current operations, but review staffing and bed flexibility for the upcoming peak window.
+                {% else %}
+                    Continue normal operations and monitor the next scheduled model refresh for any change in demand pattern.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

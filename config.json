@@ -1,0 +1,10 @@
+{
+  "data_dir": "data",
+  "patients_file": "patients.csv",
+  "encounters_file": "encounters.csv",
+  "model_file": "forecast_model.pkl",
+  "metadata_file": "model_metadata.pkl",
+  "forecast_horizon_hours": 72,
+  "lags": [1, 2, 3, 24],
+  "rolling_windows": [6, 24]
+}

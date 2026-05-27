@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hospital Capacity Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            margin: 30px auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1f2d3d;
+            margin-bottom: 20px;
+        }
+
+        form {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        select, button {
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #2c7be5;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1a5ed8;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .card h3 {
+            margin: 0;
+            color: #555;
+            font-size: 18px;
+        }
+
+        .card p {
+            margin-top: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c7be5;
+        }
+
+        .chart-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .chart-box h2 {
+            margin-top: 0;
+            color: #1f2d3d;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        ul {
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Hospital Capacity Dashboard</h1>
+
+        <form method="get">
+            <label><b>City:</b></label>
+            <select name="city">
+                {% for city in cities %}
+                    <option value="{{ city }}" {% if selected_city == city %}selected{% endif %}>{{ city }}</option>
+                {% endfor %}
+            </select>
+
+            <label><b>Encounter Class:</b></label>
+            <select name="encounter_class">
+                {% for ec in encounter_classes %}
+                    <option value="{{ ec }}" {% if selected_class == ec %}selected{% endif %}>{{ ec }}</option>
+                {% endfor %}
+            </select>
+
+            <label><b>Age Group:</b></label>
+            <select name="age_group">
+                {% for ag in age_groups %}
+                    <option value="{{ ag }}" {% if selected_age_group == ag %}selected{% endif %}>{{ ag }}</option>
+                {% endfor %}
+            </select>
+
+            <label><b>Gender:</b></label>
+            <select name="gender">
+                {% for g in genders %}
+                    <option value="{{ g }}" {% if selected_gender == g %}selected{% endif %}>{{ g }}</option>
+                {% endfor %}
+            </select>
+
+            <label><b>Race:</b></label>
+            <select name="race">
+                {% for r in races %}
+                    <option value="{{ r }}" {% if selected_race == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Apply</button>
+        </form>
+
+        <div class="cards">
+            <div class="card">
+                <h3>Total Patients</h3>
+                <p>{{ total_patients }}</p>
+            </div>
+
+            <div class="card">
+                <h3>Total Encounters</h3>
+                <p>{{ total_encounters }}</p>
+            </div>
+
+            <div class="card">
+                <h3>Average LOS (Hours)</h3>
+                <p>{{ avg_los }}</p>
+            </div>
+        </div>
+
+        <div class="chart-box">
+            <h2>Monthly Encounter Trend</h2>
+            <img src="/static/monthly_encounters.png" alt="Monthly Encounter Chart">
+        </div>
+
+        <div class="chart-box">
+            <h2>Forecasted Encounter Demand</h2>
+            <img src="/static/forecast_chart.png" alt="Forecast Chart">
+        </div>
+
+        <div class="chart-box">
+            <h2>Top 10 Cities by Encounter Volume</h2>
+            <img src="/static/top_cities.png" alt="Top Cities Chart">
+        </div>
+
+        <div class="chart-box">
+            <h2>Next 6 Period Forecast</h2>
+            <ul>
+                {% for value in forecast_values %}
+                    <li>{{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareFlow Command Center</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-model-trained="{{ model_last_trained }}" data-risk-level="{{ risk_level }}">
+
+    <div id="modelUpdateBanner" class="top-notice hidden">
+        <div class="top-notice-text">
+            New forecast model detected. Dashboard insights may have changed.
+        </div>
+        <button id="dismissBannerBtn" class="notice-btn" type="button">Dismiss</button>
+    </div>
+
+    <div class="page-shell">
+
+        <header class="page-header">
+            <div class="header-copy">
+                <div class="eyebrow">Hospital Operations Dashboard</div>
+                <h1>CareFlow Command Center</h1>
+                <p>
+                    Decision-support dashboard for monitoring demand, reviewing recent utilization,
+                    and forecasting short-term capacity pressure.
+                </p>
+            </div>
+
+            <div class="header-meta">
+                <div class="meta-card">
+                    <span class="meta-label">Last Refresh</span>
+                    <span class="meta-value">{{ last_refresh }}</span>
+                </div>
+                <div class="meta-card">
+                    <span class="meta-label">Model Trained</span>
+                    <span class="meta-value">{{ model_last_trained }}</span>
+                </div>
+                <div class="meta-card">
+                    <span class="meta-label">Model Status</span>
+                    <span class="meta-value">{{ model_status }}</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="filter-panel">
+            <div class="panel-head">
+                <div>
+                    <div class="panel-kicker">Interactive Controls</div>
+                    <h2>Filter the Dashboard</h2>
+                </div>
+            </div>
+
+            <form method="GET" action="/" class="filter-grid">
+                <div class="filter-group">
+                    <label>City</label>
+                    <select name="city">
+                        <option value="All">All Cities</option>
+                        {% for city in cities %}
+                            <option value="{{ city }}" {% if city == selected_city %}selected{% endif %}>{{ city }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Encounter Class</label>
+                    <select name="encounter_class">
+                        <option value="All">All Encounter Classes</option>
+                        {% for ec in encounter_classes %}
+                            <option value="{{ ec }}" {% if ec == selected_class %}selected{% endif %}>{{ ec }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Age Group</label>
+                    <select name="age_group">
+                        <option value="All">All Age Groups</option>
+                        {% for ag in age_groups %}
+                            <option value="{{ ag }}" {% if ag == selected_age_group %}selected{% endif %}>{{ ag }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option value="All">All Genders</option>
+                        {% for gender in genders %}
+                            <option value="{{ gender }}" {% if gender == selected_gender %}selected{% endif %}>{{ gender }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Race</label>
+                    <select name="race">
+                        <option value="All">All Races</option>
+                        {% for race in races %}
+                            <option value="{{ race }}" {% if race == selected_race %}selected{% endif %}>{{ race }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-action">
+                    <button type="submit">Apply Filters</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="hero-grid">
+            <div class="hero-left card">
+                <div class="panel-kicker">Operational Summary</div>
+                <div class="risk-row">
+                    <div>
+                        <div class="hero-title">Operational Risk</div>
+                        <div class="risk-badge {{ risk_class }}">{{ risk_level }}</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-label">Peak Demand</div>
+                        <div class="hero-stat-value">{{ peak_forecast_value }}</div>
+                    </div>
+                </div>
+
+                <div class="hero-divider"></div>
+
+                <div class="action-grid">
+                    <div class="mini-panel">
+                        <div class="mini-label">Peak Time</div>
+                        <div class="mini-value">{{ peak_forecast_hour }}</div>
+                    </div>
+                    <div class="mini-panel">
+                        <div class="mini-label">Forecast Window</div>
+                        <div class="mini-value">{{ forecast_horizon }}</div>
+                    </div>
+                </div>
+
+                <div class="hero-text-block">
+                    <div class="text-block-label">Situation</div>
+                    <p>{{ insight }}</p>
+                </div>
+
+                <div class="hero-text-block action-box">
+                    <div class="text-block-label">Recommended Action</div>
+                    <p>{{ recommended_action }}</p>
+                </div>
+            </div>
+
+            <div class="hero-right card">
+                <div class="panel-kicker">Prediction Focus</div>
+                <h2>Demand Forecast</h2>
+                <p class="subtle-text">{{ forecast_explanation }}</p>
+
+                <div class="plot-holder clean-plot">
+                    {{ forecast_plot | safe }}
+                </div>
+            </div>
+        </section>
+
+        <section class="ai-insight-card {{ ai_priority_class }}">
+            <div class="ai-insight-header">
+                <div>
+                    <div class="panel-kicker">AI Operations Insight</div>
+                    <h3>{{ ai_priority }}</h3>
+                </div>
+                <div class="confidence-pill">
+                    {{ confidence_label }}
+                </div>
+            </div>
+
+            <div class="ai-insight-body">
+                <div class="ai-box">
+                    <div class="ai-label">Operational Summary</div>
+                    <p>{{ ai_summary }}</p>
+                </div>
+
+                <div class="ai-box ai-action-box">
+                    <div class="ai-label">Recommended Action</div>
+                    <p>{{ ai_recommendation }}</p>
+                </div>
+
+                <div class="ai-box">
+                    <div class="ai-label">Forecast Confidence</div>
+                    <p>{{ confidence_note }}</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="kpi-strip">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Patients</div>
+                <div class="kpi-value">{{ total_patients }}</div>
+                <div class="kpi-note">Unique patients in selected view</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Total Encounters</div>
+                <div class="kpi-value">{{ total_encounters }}</div>
+                <div class="kpi-note">Encounter records after filters</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Avg Length of Stay</div>
+                <div class="kpi-value">{{ avg_los }}</div>
+                <div class="kpi-note">Average stay in hours</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">LOS Outlook</div>
+                <div class="kpi-value">{{ los_outlook_value }}</div>
+                <div class="kpi-note">{{ los_outlook_label }}</div>
+            </div>
+        </section>
+
+        <section class="secondary-grid">
+            <div class="card">
+                <div class="panel-kicker">Recent Activity</div>
+                <h3>Current System Status</h3>
+
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Last 24 Hours</span>
+                        <span class="status-value">{{ recent_24h_encounters }}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Last 7 Days</span>
+                        <span class="status-value">{{ recent_7d_encounters }}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Recent Peak Hour</span>
+                        <span class="status-value small">{{ recent_busiest_hour }}</span>
+                    </div>
+                </div>
+
+                <p class="card-sub">{{ recent_trend_summary }}</p>
+                <p class="card-sub">{{ los_guidance }}</p>
+            </div>
+
+            <div class="card">
+                <div class="panel-kicker">Scaled Forecasting</div>
+                <h3>Encounter Class Forecast Outlook</h3>
+                <p class="card-sub">
+                    Peak forecast comparison for the highest-volume encounter classes in the selected view.
+                </p>
+
+                <ul class="forecast-list">
+                    {% for row in encounter_class_forecasts %}
+                        <li>
+                            <strong>{{ row.encounter_class }}</strong>
+                            <span>Peak expected demand: {{ row.peak_value }} around {{ row.peak_time }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+
+        <section class="chart-grid">
+            <div class="card">
+                <div class="panel-kicker">Past Record</div>
+                <h3>Monthly Encounter Trend</h3>
+                <p class="card-sub">Historical view of encounter volume over time.</p>
+                <img src="{{ url_for('static', filename='monthly_encounters.png') }}" alt="Monthly Encounter Trend" class="chart-img">
+            </div>
+
+            <div class="card">
+                <div class="panel-kicker">Demand Drivers</div>
+                <h3>Top Cities by Encounter Volume</h3>
+                <p class="card-sub">Locations contributing most to encounter demand in the selected view.</p>
+                <img src="{{ url_for('static', filename='top_cities.png') }}" alt="Top Cities Chart" class="chart-img">
+            </div>
+        </section>
+
+        <section class="trust-grid">
+            <div class="card">
+                <div class="panel-kicker">Model Reliability</div>
+                <h3>Why These Results Are Trustworthy</h3>
+                <div class="detail-list">
+                    <div class="detail-item"><span>Model Type</span><strong>{{ model_type }}</strong></div>
+                    <div class="detail-item"><span>Validation</span><strong>{{ validation_method }}</strong></div>
+                </div>
+                <p class="card-sub">{{ validation_note }}</p>
+            </div>
+
+            <div class="card">
+                <div class="panel-kicker">Limitations</div>
+                <h3>Important Considerations</h3>
+                <p class="card-sub">{{ limitation_note }}</p>
+
+                <div class="alerts-row">
+                    <button id="enableAlertsBtn" class="alert-btn" type="button">Enable Browser Alerts</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="card forecast-values-card">
+            <div class="panel-kicker">Forecast Details</div>
+            <h3>Next Key Forecast Values</h3>
+            <ul class="forecast-list two-col compact-list">
+                {% for row in forecast_values %}
+                    <li><strong>{{ row.month }}</strong><span>{{ row.value }}</span></li>
+                {% endfor %}
+            </ul>
+        </section>
+
+    </div>
+
+    <script>
+        (function () {
+            const body = document.body;
+            const currentModelTime = body.dataset.modelTrained || "";
+            const currentRisk = body.dataset.riskLevel || "";
+            const banner = document.getElementById("modelUpdateBanner");
+            const dismissBtn = document.getElementById("dismissBannerBtn");
+            const enableAlertsBtn = document.getElementById("enableAlertsBtn");
+
+            const previousModelTime = localStorage.getItem("careflow_last_model_trained");
+            const previousRisk = localStorage.getItem("careflow_last_risk");
+
+            if (previousModelTime && previousModelTime !== currentModelTime) {
+                banner.classList.remove("hidden");
+            }
+
+            if (dismissBtn) {
+                dismissBtn.addEventListener("click", function () {
+                    banner.classList.add("hidden");
+                });
+            }
+
+            if (enableAlertsBtn) {
+                enableAlertsBtn.addEventListener("click", async function () {
+                    if ("Notification" in window) {
+                        const permission = await Notification.requestPermission();
+                        if (permission === "granted") {
+                            new Notification("CareFlow alerts enabled", {
+                                body: "You will be notified about important dashboard changes."
+                            });
+                        }
+                    }
+                });
+            }
+
+            if ("Notification" in window && Notification.permission === "granted") {
+                if (previousRisk && previousRisk !== currentRisk && (currentRisk === "Medium Risk" || currentRisk === "High Risk")) {
+                    new Notification("CareFlow Risk Update", {
+                        body: `Risk level changed to ${currentRisk}. Review the latest patient flow outlook.`
+                    });
+                }
+
+                if (previousModelTime && previousModelTime !== currentModelTime) {
+                    new Notification("CareFlow Model Refresh", {
+                        body: "A newer forecast model is available. Review the updated dashboard."
+                    });
+                }
+            }
+
+            localStorage.setItem("careflow_last_model_trained", currentModelTime);
+            localStorage.setItem("careflow_last_risk", currentRisk);
+        })();
+    </script>
+
+</body>
+</html>
