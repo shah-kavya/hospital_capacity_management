@@ -220,3 +220,5 @@ data/encounters.csv
 data/conditions.csv
 data/observations.csv
 data/patients.csv
+static/monthly_encounters.png
+static/top_cities.png

@@ -36,16 +36,13 @@ How to Run the Application:
 1. Install Python (version 3.9 or above)
 
 2. Install required libraries:
-pip install flask pandas numpy matplotlib plotly scikit-learn
+`pip install -r requirements.txt`
 
-3. Navigate to project folder:
-cd careflow-project
+3. Run the application:
+`python app.py`
 
-4. Run the application:
-python app.py
-
-5. Open the application in browser:
-http://127.0.0.1:5000/
+4. Open the application in browser:
+`http://127.0.0.1:5000/`
 
 ---
 
